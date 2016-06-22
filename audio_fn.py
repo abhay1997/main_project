@@ -3,6 +3,7 @@ from gtts import gTTS
 import pyaudio
 import wave
 from pydub import AudioSegment
+import os
 
 
 def stt():
@@ -69,6 +70,9 @@ def find( str , cmmd ):
 	else:
 		return False
 
+def remove_files():
+	os.remove("temp.mp3")
+	os.remove("temp.wav")
 
 
 
