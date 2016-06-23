@@ -1,5 +1,6 @@
 import audio_fn as ad
 import time
+import feature
 
 #start
 name="name"
@@ -8,9 +9,9 @@ def start():
 	hour= int(time.strftime("%H"))
 	print hour
 
-	if (hour>5 and hour <12):
+	if (hour>=5 and hour <12):
 		ad.tts("Good morning")
-	elif (hour>12 and hour <16):
+	elif (hour>=12 and hour <16):
 		ad.tts("Good afternoon")
 	else:
         	ad.tts("Good evening") 
@@ -27,7 +28,7 @@ def which_mode():
 	wh=ad.stt()
 	if ad.find(wh,"read"):
 		ad.tts("ok, I am ready to assist you in reading.")
-		#read()
+		feature.main()
 	elif ( ad.find(wh,"sketch") or ad.find(wh,"draw") ):
 		ad.tts("ok, I am ready to assist you in sketching.")
 		#sketch()
@@ -43,6 +44,6 @@ def which_mode():
 if __name__ == "__main__":
 	start()
 #	configure()
-	ad.tts(str(interface.name)+", What do you intend to do?")
+	ad.tts(str(name)+", What do you intend to do?")
 	which_mode()
 #	dict_crop()
