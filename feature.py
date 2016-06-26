@@ -11,7 +11,7 @@ from matplotlib import pyplot as plt
 import pytesseract
 import os
 import audio_fn as ad
-
+import enchant
 
 rot = 0
 z = 0
@@ -202,7 +202,7 @@ def crop (M2,M5):
 			
 					ret,frame0 = camera.read()
 					frame0 = imutils.resize(frame0, width=600)
-					frame0 = cv2.warpAffine(frame0,M2,(600,450))
+					#frame0 = cv2.warpAffine(frame0,M2,(600,450))
 					frame0 = cv2.warpPerspective(frame0,M5,(600,900))
 					l=-1
 		
@@ -214,7 +214,7 @@ def crop (M2,M5):
 					break
 				# resize the frame, blur it, and convert it to the HSV color space
 				frame = imutils.resize(frame, width=600)
-				frame = cv2.warpAffine(frame,M2,(600,450))
+				#frame = cv2.warpAffine(frame,M2,(600,450))
 				frame = cv2.warpPerspective(frame,M5,(600,900))
 				blurred = cv2.GaussianBlur(frame, (11, 11), 0)
 				hsv = cv2.cvtColor(blurred, cv2.COLOR_BGR2HSV)
@@ -342,57 +342,93 @@ def ocr(img):
 	cv2.imwrite('test.jpg', gray)
 	str1 = pytesseract.image_to_string(Image.open('test.jpg'))
 	os.remove('test.jpg')
+	str1 = str1.lstrip()		#to remove any leading blank spaces, if any
+	n = str1.find('\n')
+
+	if n!=-1:
+		str1 = str1[0:n]		#first line stored
+	n = str1.find(' ', beg=1)
+	if n!=-1:
+		str1 = str1[0:n]		#first word in first line
 	return str1
 
 
 
 #Dictionary
 def dictionary(word):
+	
+	d = enchant.Dict("en_GB")
+	if not d.check(word):
+		word = d.suggest(word)[0]
+	if word[-1] == '.':
+		word= word[0:-1]
 	i=0
-	#while (1):
+	c=0
 	print word
 	dictionary=PyDictionary()
 	dict=dictionary.meaning(word)
+	while (1):
+		
 	
-	if dict is not None:
-		ad.tts("your word is " + word)
-		 
-		if ( dict.has_key('Adjective')) :
+		if dict is not None:
+			ad.tts("your word is " + word)
+			 
+			if ( dict.has_key('Adjective')) :
 
-			s= dict['Adjective']
-			if len(s)>=i :
-				print s[i] 	
-				ad.tts("(adjective)" + s[i])
+				s= dict['Adjective']
+				if len(s)>i :
+					print s[i] 	
+					ad.tts("adjective, " + s[i])
+					c=1
 				
-		if dict.has_key('Noun') :
-			s= dict['Noun']
-			if len(s)>=i :
-				print s[i] 	
-				ad.tts("(NOUN)" + s[i])
+			if dict.has_key('Noun') :
+				s= dict['Noun']
+				if len(s)>i :
+					print s[i] 	
+					ad.tts("Noun, " + s[i])
+					c=1
 				
-		if dict.has_key('Verb') :
-			s= dict['Verb']
-			if len(s)>=i :
-				print s[i] 
-				ad.tts("VERB" + s[i])
+			if dict.has_key('Verb') :
+				s= dict['Verb']
+				if len(s)>i :
+					print s[i] 
+					ad.tts("Verb, " + s[i])
+					c=1
 				
-		if dict.has_key('Adverb') :
-			s= dict['Adverb']
-			if len(s)>=i :
-				print s[i] 
-				ad.tts("(ADVERB)" + s[i])
+			if dict.has_key('Adverb') :
+				s= dict['Adverb']
+				if len(s)>i :
+					print s[i] 
+					ad.tts("Adverb, " + s[i])
+					c=1
 				
-		if dict.has_key('Preposition') :
-			s= dict['Preposition']
-			if len(s)>=i :
-				print s[i] 
-				ad.tts("(PREPO)" + s[i])
+			if dict.has_key('Preposition') :
+				s= dict['Preposition']
+				if len(s)>=i :
+					print s[i] 
+					ad.tts("Preposition, " + s[i])
+					c=1
+			i=i+1
+			if c==0:
+				ad.tts("sorry, no more meanings available")
+				break
+		else:
+			ad.tts("sorry, the meaning is not available")
+			break
+			
 				
 		
-		#ad.tts("If alternate meaning required, give a double tap within the next 3 seconds")
-		#audio trigger will be awaited here, after message for one, in case user didnt get meaning that was wanted
-		#if received, then i++
-
+		ad.tts("Do you want an alternate meaning? If so, say yes, otherwise say no." )
+		while (1):
+			cmmd=ad.stt()
+			if cmmd == None:
+				continue
+			elif ad.find(cmmd, "yes"):
+				break
+			elif ad.find(cmmd, "no"):
+				return;
+				
+	return;
 
 		
 #if __name__ =="__main__":
