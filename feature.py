@@ -12,6 +12,7 @@ import pytesseract
 import os
 import audio_fn as ad
 import enchant
+import math
 
 rot = 0
 z = 0
@@ -124,8 +125,19 @@ def page_setup():
 	cv2.destroyAllWindows()
 	
 def trep_matr():
+	global p1
+	global p2 
 	pt1 = np.float32([a,b,c,d])
-	pt2 = np.float32([[0,0],[600,0],[0,900],[600,900]])
+	dist1 = math.sqrt( (b[0] - a[0])**2 + (b[1] - a[1])**2 )
+	dist2 = math.sqrt( (d[0] - c[0])**2 + (d[1] - c[1])**2 )
+	p3 = (dist1+dist2)/2
+	dist3 = math.sqrt( (c[0] - a[0])**2 + (c[1] - a[1])**2 )
+	dist4 = math.sqrt( (b[0] - d[0])**2 + (b[1] - d[1])**2 )
+	p4 = (dist3+dist4)/2
+	p1 = int(p3)
+	p2 = int(p4)
+	pt2 = np.float32([[0,0],[p1,0],[0,p2],[p1,p2]])
+	#pt2 = np.float32([[0,0],[600,0],[0,900],[600,900]])
 	M5 = cv2.getPerspectiveTransform(pt1,pt2)
 	#frame2 = cv2.warpPerspective(frame,M5,(600,900))
 	return M5;
@@ -203,7 +215,7 @@ def crop (M2,M5):
 					ret,frame0 = camera.read()
 					frame0 = imutils.resize(frame0, width=600)
 					#frame0 = cv2.warpAffine(frame0,M2,(600,450))
-					frame0 = cv2.warpPerspective(frame0,M5,(600,900))
+					frame0 = cv2.warpPerspective(frame0,M5,(p1,p2))
 					l=-1
 		
 				# grab the current frame
@@ -215,7 +227,7 @@ def crop (M2,M5):
 				# resize the frame, blur it, and convert it to the HSV color space
 				frame = imutils.resize(frame, width=600)
 				#frame = cv2.warpAffine(frame,M2,(600,450))
-				frame = cv2.warpPerspective(frame,M5,(600,900))
+				frame = cv2.warpPerspective(frame,M5,(p1,p2))
 				blurred = cv2.GaussianBlur(frame, (11, 11), 0)
 				hsv = cv2.cvtColor(blurred, cv2.COLOR_BGR2HSV)
 			 
