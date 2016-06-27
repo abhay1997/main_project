@@ -1,5 +1,5 @@
 import time
-import imutils
+#import imutils
 import Image
 from PyDictionary import PyDictionary
 from collections import deque
@@ -214,7 +214,7 @@ def crop (M2,M5):
 					ad.tts("I am eveready.")
 			
 					ret,frame0 = camera.read()
-					frame0 = imutils.resize(frame0, width=600)
+					#frame0 = imutils.resize(frame0, width=600)
 					#frame0 = cv2.warpAffine(frame0,M2,(600,450))
 					frame0 = cv2.warpPerspective(frame0,M5,(p1,p2))
 					l=-1
@@ -226,7 +226,7 @@ def crop (M2,M5):
 				if args.get("video") and not grabbed:
 					break
 				# resize the frame, blur it, and convert it to the HSV color space
-				frame = imutils.resize(frame, width=600)
+				#frame = imutils.resize(frame, width=600)
 				#frame = cv2.warpAffine(frame,M2,(600,450))
 				frame = cv2.warpPerspective(frame,M5,(p1,p2))
 				blurred = cv2.GaussianBlur(frame, (11, 11), 0)
