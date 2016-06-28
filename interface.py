@@ -1,6 +1,6 @@
 import audio_fn as ad
 import time
-
+import feature2
 #start
 name="name"
 def start():
@@ -27,7 +27,7 @@ def which_mode():
 	wh=ad.stt()
 	if ad.find(wh,"read"):
 		ad.tts("ok, I am ready to assist you in reading.")
-		#read()
+		feature2()
 	elif ( ad.find(wh,"sketch") or ad.find(wh,"draw") ):
 		ad.tts("ok, I am ready to assist you in sketching.")
 		#sketch()
