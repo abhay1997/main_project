@@ -508,6 +508,7 @@ def main(tme):
 	while(1):
 		cmmd = ad.stt()
 		if cmmd == None:
+			ad.tts('try again')
 			continue
 		elif ad.find(cmmd, 'bye') or ad.find(cmmd, 'no'):
 			break
