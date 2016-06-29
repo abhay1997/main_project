@@ -23,21 +23,26 @@ def start():
 	return
 
 def which_mode():
-	#ad.tts(str(name)+"What do you intend to do?")
-	wh=ad.stt()
-	if ad.find(wh,"read"):
-		ad.tts("ok, I am ready to assist you in reading.")
-		feature2()
-	elif ( ad.find(wh,"sketch") or ad.find(wh,"draw") ):
-		ad.tts("ok, I am ready to assist you in sketching.")
-		#sketch()
-	elif ( ad.find(wh,"note") or ad.find(wh,"write") ):
-		ad.tts("ok, I am ready to assist you in taking notes.")
-		#note()
-	else:
-		ad.tts("Sorry, I didn't get you. Are you reading or sketching or taking notes?")
-		which_mode()	
-
+	while (1):
+		wh=ad.stt()
+		if wh is None:
+			ad.tts( "try again")
+			continue
+		if ad.find(wh,"read"):
+			ad.tts("ok, I am ready to assist you in reading.")
+			feature2.main(1)
+			return;
+		elif ( ad.find(wh,"sketch") or ad.find(wh,"draw") ):
+			ad.tts("ok, I am ready to assist you in sketching.")
+			#sketch()
+			return;
+		elif ( ad.find(wh,"note") or ad.find(wh,"write") ):
+			ad.tts("ok, I am ready to assist you in taking notes.")
+			#note()
+			return;
+		else:
+			ad.tts("Sorry, I didn't get you. Are you reading or sketching or taking notes?")
+			which_mode()
 
 
 if __name__ == "__main__":
