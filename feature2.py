@@ -1,5 +1,4 @@
 import time
-#import imutils
 import Image
 from PyDictionary import PyDictionary
 from collections import deque
@@ -14,16 +13,23 @@ import audio_fn as ad
 import enchant
 import math
 
+global time
+time = time.asctime(time.localtime(time.time()))
+
+
 rot = 0
 z = 0
 #low1 = (25, 60, 195)
 #high1 = (50, 125, 230)
 
 #low1 = (160,150,100)
-#high1 = (180, 255,255)
+# = (180, 255,255)
 
-low1 = (14, 200, 230)
-high1 = (27, 255, 255)
+#low1 = (14, 200, 230)	#orange1
+#high1 = (27, 255, 255)
+
+low1 = (5, 140, 150)
+high1 = (27, 255, 255)  #orange2
 
 def point_cordinate(): #cordinates of point
 
@@ -35,21 +41,19 @@ def point_cordinate(): #cordinates of point
 		help="max buffer size")
 	args = vars(ap.parse_args())
 
-	greenLower = (low1)
-	greenUpper = (high1)
+	#low1 = (low1)
+	#high1 = (high1)
 	 
 	# initialize the list of tracked points, the frame counter, and the coordinate deltas
 	pts = deque(maxlen=args["buffer"])
-	counter = 0
+	#counter = 0
 	(dX, dY) = (100 , 100)
 	t=300
 
 	camera = cv2.VideoCapture(0)
 
 	while True:
-		#will start tracking when q is pressed, until then just display the video grab the current frame
 		(grabbed, frame) = camera.read()		
-		#frame = cv2.warpAffine(frame,Rotate.rotate(),(cols,rows)) if we are viewing a video and we did not grab a frame, then we have reached the end of the video
 		if not grabbed:
 			break
 		# blur it, and convert it to the HSV color space
@@ -57,7 +61,7 @@ def point_cordinate(): #cordinates of point
 		hsv = cv2.cvtColor(blurred, cv2.COLOR_BGR2HSV)
 	 
 		# construct a mask for the color "green", then perform a series of dilations and erosions to remove any small blobs left in the mask
-		mask = cv2.inRange(hsv, greenLower, greenUpper)
+		mask = cv2.inRange(hsv, low1, high1)
 		mask = cv2.erode(mask, None, iterations=2)
 		mask = cv2.dilate(mask, None, iterations=2)
 		cv2.imshow('mask', mask)
@@ -95,7 +99,7 @@ def point_cordinate(): #cordinates of point
 		# show the frame to our screen and increment the frame counter
 		cv2.imshow("frame", frame)
 		key = cv2.waitKey(1) & 0xFF
-		counter += 1
+		#counter += 1
 		t=t-1
 		# if the 'q' key is pressed, or if the object slows down, loop is exited and the cropped part is displayed
 		if (key == ord('q')) or  (len(pts)>24 and np.abs(dX) < 5 and np.abs(dY) < 5):
@@ -170,7 +174,8 @@ def rotate(c):
 	return;
 
 #Crop
-def crop (M2,M5):
+def crop (M2,M5,picno):
+	
 	# construct the argument parse and parse the arguments
 	ap = argparse.ArgumentParser()
 	ap.add_argument("-v", "--video",
@@ -179,65 +184,48 @@ def crop (M2,M5):
 		help="max buffer size")
 	args = vars(ap.parse_args())
 
-	# define the lower and upper boundaries of the "green"
-	# ball in the HSV color space
-	greenLower = low1
-	greenUpper = high1
-	 
-	# initialize the list of tracked points, the frame counter,
-	# and the coordinate deltas
+	
+	# initialize the list of tracked points and the coordinate deltas
 	pts = deque(maxlen=args["buffer"])
-	counter = 0
 	(dX, dY) = (0 , 0)
-	direction = ""
-	k=1
 	l=0
-	p=''
-
-	# if a video path was not supplied, grab the reference
-	# to the webcam
-	if not args.get("video", False):
-		camera = cv2.VideoCapture(0)
-	 
-	# otherwise, grab a reference to the video file
-	else:
-		camera = cv2.VideoCapture(args["video"])
-
-	ad.tts("to start, say okay")
+	
+	camera = cv2.VideoCapture(0)
+	
 	while True:
+		ad.tts("to start, say okay")		#NEW*
+		
 		cmmd=ad.stt()
+		if cmmd is None:
+			continue
 		if ad.find(cmmd, "ok"):
 			l=0
 			while True:
-		
+			
 				if l==0:
-					ad.tts("I am eveready.")
+					ad.tts("I am ready.")
 			
 					ret,frame0 = camera.read()
-					#frame0 = imutils.resize(frame0, width=600)
-					#frame0 = cv2.warpAffine(frame0,M2,(600,450))
 					frame0 = cv2.warpPerspective(frame0,M5,(p1,p2))
 					l=-1
-		
+				
 				# grab the current frame
 				(grabbed, frame) = camera.read()
 
 				# if we are viewing a video and we did not grab a frame, then we have reached the end of the video
 				if args.get("video") and not grabbed:
 					break
-				# resize the frame, blur it, and convert it to the HSV color space
-				#frame = imutils.resize(frame, width=600)
-				#frame = cv2.warpAffine(frame,M2,(600,450))
+				# resize the frame, crop it(into a quadrilateral), blur it, and convert it to the HSV color space
 				frame = cv2.warpPerspective(frame,M5,(p1,p2))
 				blurred = cv2.GaussianBlur(frame, (11, 11), 0)
 				hsv = cv2.cvtColor(blurred, cv2.COLOR_BGR2HSV)
 			 
-				# construct a mask for the color "green", then perform a series of dilations and erosions to remove any small blobs left in the mask
-				mask = cv2.inRange(hsv, greenLower, greenUpper)
+				# construct a mask for a color, then perform a series of dilations and erosions to remove any small blobs left 							#in the mask
+				mask = cv2.inRange(hsv, low1, high1)
 				mask = cv2.erode(mask, None, iterations=2)
 				mask = cv2.dilate(mask, None, iterations=2)
 				cv2.imshow('mask', mask)
-
+				
 				# find contours in the mask and initialize the current (x, y) center of the ball
 				cnts = cv2.findContours(mask.copy(), cv2.RETR_EXTERNAL,
 					cv2.CHAIN_APPROX_SIMPLE)[-2]
@@ -250,10 +238,10 @@ def crop (M2,M5):
 					M = cv2.moments(c)
 
 					center = (int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"]))
-					if k==1 :
+					if l==-1 :							#NEW*
 						a = int(M["m10"] / M["m00"])
 						b = int(M["m01"] / M["m00"])
-						k=0
+						l=-2							#NEW*
 
 					# only proceed if the radius meets a minimum size
 					if radius > 5:
@@ -274,26 +262,37 @@ def crop (M2,M5):
 				# show the frame to our screen and increment the frame counter
 				cv2.imshow("frame", frame)
 				key = cv2.waitKey(1) & 0xFF
-				counter += 1
-				if (l==-1 and (np.abs(dX) > 15 or np.abs(dY) > 15)):
-					l=-2
+				#counter += 1
+				if (l==-2 and (np.abs(dX) > 15 or np.abs(dY) > 15)):			#NEW*
+					l=-3								#NEW*
 				# if the 'q' key is pressed, or if the object slows down, loop is exited and the cropped part is displayed
-				if (l==-2 and key == ord('q')) or  (l==-2 and len(pts)>24 and np.abs(dX) < 10 and np.abs(dY) < 10):
+				if (l==-3 and key == ord('q')) or  (l==-3 and len(pts)>24 and np.abs(dX) < 10 and np.abs(dY) < 10):
 					c = int(M["m10"] / M["m00"])
 					d = int(M["m01"] / M["m00"])
+					
 					if (np.abs(d-b)>35):
+						if b<d or c<a :
+							ad.tts("sorry, invalid, please try again")
+							break
 						ad.tts("image is found and being cropped")
 						crop_img = frame0[d:b,a:c]
+										
 						camera.release()
+						newpath = '/home/sam/Desktop/itsp/photos'+str(time)  	
+						if not os.path.exists(newpath):
+							os.makedirs(newpath)
+						cv2.imwrite(newpath + '/' + str(picno)+'.jpg',crop_img)
 						cv2.imshow('cropped', crop_img)
-						cv2.waitKey(0)
+						cv2.waitKey(5000)
 						cv2.destroyAllWindows()
-						cv2.imwrite('Image.jpg',crop_img)
 						return 0;
 					#else treat it as an underline of a word
 					else:
+						if c<a :
+							ad.tts("sorry, invalid, please try again")
+							break
 						ad.tts("I am looking for the meaning")
-						crop_img = frame0[b-50:b-20,a:c]
+						crop_img = frame0[b-50:b-15,a:c]
 						cv2.imwrite('Image0.jpg',crop_img)
 						crop_img = cntour(crop_img)
 						cv2.imwrite('Image.jpg',crop_img)
@@ -318,40 +317,38 @@ def cntour (crop_img):
 	help="max buffer size")
 	args = vars(ap.parse_args())
 	# define the lower and upper boundaries of the "green" ball in the HSV color space, then initialize the list of tracked points
-	greenLower = (0, 0, 100)
-	greenUpper = (255, 100, 255)
+	low1 = (0, 0, 100)
+	high1 = (255, 100, 255)
 	pts = deque(maxlen=args["buffer"])
 	# resize the frame, blur it, and convert it to the HSV color space
 	blurred = cv2.GaussianBlur(crop_img, (11, 11), 0)
 	hsv = cv2.cvtColor(crop_img, cv2.COLOR_BGR2HSV)
 	# construct a mask for the color "green", then perform a series of dilations and erosions to remove any small blobs left in the mask
-	cv2.imshow("window", hsv)
-	cv2.waitKey(3000)
-	mask = cv2.inRange(hsv, greenLower, greenUpper)
+	
+	mask = cv2.inRange(hsv, low1, high1)
 	mask = cv2.erode(mask, None, iterations=2)
 	mask = cv2.dilate(mask, None, iterations=2)
 
 	cnts = cv2.findContours(mask.copy(), cv2.RETR_EXTERNAL,
 	cv2.CHAIN_APPROX_SIMPLE)[-2]
 	if len(cnts) > 0:
-			# find the largest contour in the mask, then use it to compute the minimum enclosing circle and centroid
-			c = max(cnts, key=cv2.contourArea)
-			((x, y), radius) = cv2.minEnclosingCircle(c)
-			M = cv2.moments(c)
-			center = (int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"]))
-			e = int(M["m10"] / M["m00"])
-			f = int(M["m01"] / M["m00"])
-			cv2.imwrite('pic3.jpg',crop_img)
-			crop_img2 = crop_img[f-2:1000000,0:10000000]
-			#cv2.imwrite('pic3.jpg',crop_img2)
+		# find the largest contour in the mask, then use it to compute the minimum enclosing circle and centroid
+		c = max(cnts, key=cv2.contourArea)
+		((x, y), radius) = cv2.minEnclosingCircle(c)
+		M = cv2.moments(c)
+		center = (int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"]))
+		e = int(M["m10"] / M["m00"])
+		f = int(M["m01"] / M["m00"])
+		cv2.imwrite('pic3.jpg',crop_img)
+		crop_img2 = crop_img[f-5:1000000,0:10000000]
+		#cv2.imwrite('pic3.jpg',crop_img2)
 	cv2.destroyAllWindows()
 	return crop_img2;
 
 
 #Ocr
 def ocr(img):
-	
-	#hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+
 	gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
 	cv2.imwrite('test.jpg', gray)
@@ -362,14 +359,7 @@ def ocr(img):
 
 	if n!=-1:
 		str1 = str1[0:n]		#first line stored
-	n = str1.find(' ')
-	if n!=-1:
-		str1 = str1[0:n]
-		#first word in first line
-	n = str1.find('\n')
 
-	if n!=-1:
-		str1 = str1[0:n]		#first line stored
 	
 	str1 = str1.strip()			#to remove any leading or trailing blank spaces, if any
 	l= len(str1)
@@ -398,7 +388,6 @@ def ocr(img):
 
 	print n
 	i=0
-	c=0
 	d = enchant.Dict("en_GB")
 	while n>i:
 		print a[i]
@@ -406,17 +395,19 @@ def ocr(img):
 			if len(d.suggest(a[i])) >0:
 				a[i] = d.suggest(a[i])[0]
 				print a[i]
-				ad.tts("is your word " + a[i])
-				cmmd = ""
-				while (1):
-					cmmd=ad.stt()
-					if cmmd is None:
-						continue
-					elif (ad.find(cmmd, "yes")):
-						return a[i];
-					elif (ad.find(cmmd, "no")):
-						
-						break
+
+		ad.tts("is your word " + a[i])
+		cmmd = ""
+		while (1):
+			cmmd=ad.stt()
+			if cmmd is None:
+				ad.tts("Try again")
+				continue
+			elif (ad.find(cmmd, "yes")):
+				return a[i];
+			elif (ad.find(cmmd, "no")):
+				
+				break
 
 		i=i+1
 	return "";
@@ -424,22 +415,21 @@ def ocr(img):
 
 #Dictionary
 def dictionary(word):
-	if word == "":						#NEW
-		ad.tts("Didn't get the word")			#NEW
-		return;						#NEW
+	if word == "":						
+		ad.tts("Didn't get the word")			
+		return;						
 	d = enchant.Dict("en_GB")
 	if not d.check(word):
 		word = d.suggest(word)[0]
 	if word[-1] == '.':
 		word= word[0:-1]
 	i=0
-	c=0
 	print word
 	dictionary=PyDictionary()
 	dict=dictionary.meaning(word)
 	while (1):
-		
-	
+		c=0
+
 		if dict is not None:
 			ad.tts("your word is " + word)
 			 
@@ -488,25 +478,43 @@ def dictionary(word):
 			
 				
 		
-		ad.tts("Do you want an alternate meaning? If so, say yes, otherwise say no." )
+		ad.tts("Do you want an alternate meaning?" )
 		while (1):
 			cmmd=ad.stt()
 			if cmmd == None:
 				continue
-			elif ad.find(cmmd, "yes"):
+			elif ad.find(cmmd, "yes") or ad.find(cmmd, "yeah"):
 				break
 			elif ad.find(cmmd, "no"):
 				return;
 				
 	return;
 
-		
+
 #if __name__ =="__main__":
-def main():	
-	page_setup()	
-	M = rotate(c)
-	M5=trep_matr()
-	crop_img = crop(M,M5)
+def main(tme):
+	if tme == 1:	
+		page_setup()	
+		global M
+		M = rotate(c)
+		global M5
+		M5 = trep_matr()
+		tme = 2
+	crop_img = crop(M,M5,tme/2)
 	if crop_img is not 0:
 		s=ocr(crop_img)
 		dictionary(s)
+	ad.tts('do you want to continue reading?')
+	while(1):
+		cmmd = ad.stt()
+		if cmmd == None:
+			continue
+		elif ad.find(cmmd, 'bye') or ad.find(cmmd, 'no'):
+			break
+		elif ad.find(cmmd, 'yes') or ad.find(cmmd, 'yeah'):
+			
+			tme = tme +1
+			break
+	if not tme %2 ==0:
+		tme = tme +1
+		main(tme)
